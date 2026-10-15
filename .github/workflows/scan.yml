@@ -1,0 +1,71 @@
+# Scan every hour: read the Google Sheet, check all job boards, publish the page.
+name: Scan
+
+on:
+  schedule:
+    - cron: "13 * * * *" # every hour at :13 (GitHub may start it a little later)
+  workflow_dispatch: # the "Run workflow" button
+  push:
+    branches: [main] # also right after the project is created from the template
+
+permissions:
+  contents: write # to publish the page on the gh-pages branch
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # The template project itself shows the setup guide instead of a job board.
+      - name: Setup guide (template project only)
+        if: github.repository == 'BarboneBarbaPersonal/JobScout-Template'
+        run: mkdir -p site && cp page/setup.html site/index.html
+
+      - uses: actions/setup-python@v5
+        if: github.repository != 'BarboneBarbaPersonal/JobScout-Template'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - if: github.repository != 'BarboneBarbaPersonal/JobScout-Template'
+        run: pip install -r requirements.txt
+
+      # Remembered between scans, never published: which board each company uses.
+      - uses: actions/cache@v4
+        if: github.repository != 'BarboneBarbaPersonal/JobScout-Template'
+        with:
+          path: cache
+          key: scan-${{ github.run_id }}
+          restore-keys: scan-
+
+      # The board published by the last scan (keeps each job's "found" date).
+      - name: Get the current page
+        if: github.repository != 'BarboneBarbaPersonal/JobScout-Template'
+        run: |
+          git fetch --depth 1 origin gh-pages && git worktree add site origin/gh-pages || mkdir -p site
+
+      - name: Scan
+        if: github.repository != 'BarboneBarbaPersonal/JobScout-Template'
+        env:
+          SHEET_URL: ${{ secrets.SHEET_URL }}
+        run: python -m scout.main site
+
+      # Publish the page, also when the scan stopped early (the page then says why).
+      # The first push of the gh-pages branch also switches GitHub Pages on.
+      - name: Publish the page
+        if: ${{ !cancelled() }}
+        run: |
+          cd site
+          rm -rf .git
+          git init -q -b gh-pages
+          git config user.name "JobScout"
+          git config user.email "jobscout@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Scan $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" gh-pages

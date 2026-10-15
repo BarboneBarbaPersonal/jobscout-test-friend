@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Check again every 10 minutes: the board replaces this page after the next good scan -->
+<meta http-equiv="refresh" content="600">
+<meta name="robots" content="noindex, nofollow">
+<title>JobScout</title>
+<style>
+  /* Same colours as the job board */
+  :root { --bg: #f6f4ef; --card: #ffffff; --text: #1d1b18; --muted: #6b665d; --line: #ddd7cb; --accent: #b5341a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161513; --card: #282622; --text: #eeeae2; --muted: #a39d92; --line: #3a3732; --accent: #e0714f; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .box { max-width: 560px; margin: 48px auto; padding: 20px; background: var(--card);
+         border: 1px solid var(--line); border-radius: 10px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; color: var(--muted); }
+  a { color: var(--accent); font-weight: 600; }
+  @media (max-width: 600px) { .box { margin: 16px; } }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>{{TITLE}}</h1>
+    <p>{{MESSAGE}}</p>
+    <p>This page checks again by itself every 10 minutes.</p>
+    <a href="https://barbonebarbapersonal.github.io/JobScout-Template/">Open the setup guide</a>
+  </div>
+</body>
+</html>
